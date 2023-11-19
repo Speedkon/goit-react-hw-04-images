@@ -1,4 +1,4 @@
-import { Component } from "react";
+import {useEffect, useState } from "react";
 import { fetchImages } from "./helpers/api";
 import { MutatingDots } from  'react-loader-spinner'
 import { Searchbar } from "./Searchbar/Searchbar";
@@ -6,65 +6,52 @@ import { ImageGallery } from "./ImageGallery/ImageGallery";
 import { Button } from "./Button/Button";
 import css from './App.module.css';
 
-export class App extends Component {
-  state = {
-    gallery: [],
-    query: "",
-    page: 1,
-    isLoading: false,
-    error: false,
-    totalPages: false,
-  };
+export const App = () => {
+  const [gallery, setGallery] = useState([]);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(false);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
+  useEffect(() => {
+    if (query === '') {
+      return
+    }
 
-    if (page !== prevState.page || query !== prevState.query) {
+    const getImages = async () => {
+      setIsLoading(true);
+      const { hits, totalHits } = await fetchImages(query, page);
+      setGallery(prevImages => [...prevImages, ...hits]);
+      setTotalPages(page < Math.ceil(totalHits / 12));
+    }
       try {
-        this.setState({ isLoading: true });
-        const initialImages = await fetchImages(query, page);
-        
-        this.setState(prevState => {
-          const {hits,totalHits } = initialImages;
-
-          return {
-            gallery: [...prevState.gallery, ...hits],
-            isLoading: false,
-            totalPages: page < Math.ceil(totalHits / 12),
-          }
-        });
-      } catch (error) {
-        this.setState({ error: true, isLoading: false,})
+        getImages()
+        }
+      catch (error) {
+        setError(true);
+        setIsLoading(false);
       } finally {
-      this.setState({ isLoading: false });
-    }
-    }
-  }
+        setIsLoading(false);
+      }
+  }, [query, page]);
 
-  handleSubmit = value => {
+  const handleSubmit = value => {
     if(!value.query.trim()) return alert("Can not be emrty")
-    this.setState({
-      query: value.query,
-      page: 1,
-      gallery: [],
-    })
+    setQuery(value.query);
+    setPage(1);
+    setGallery([]);
   };
 
-  loadMore = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1
-      }
-    })
-  }
+  const loadMore = () => {
+    setPage(prevState => prevState.page + 1)
+  };
 
-  render() {
-    const { isLoading, error, gallery, totalPages } = this.state;
-    const images = gallery.length !== 0;
+  const images = gallery.length !== 0;
 
     return (
       <div className={css.App}>
-        <Searchbar onSubmit={this.handleSubmit}></Searchbar>
+        <Searchbar onSubmit={handleSubmit}></Searchbar>
 
         {isLoading && (<MutatingDots
           height="100"
@@ -83,10 +70,9 @@ export class App extends Component {
           <b>Oops! Something went wrong! Please try reloading this page! 🥹</b>
         )}  
         {images && <ImageGallery gallery={gallery}></ImageGallery>}
-        {totalPages && !isLoading  && images && <Button onClick={this.loadMore} name="Load more"/>} 
+        {totalPages && !isLoading  && images && <Button onClick={loadMore} name="Load more"/>} 
       </div>
     )
-  }
 }
 
 
