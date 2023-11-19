@@ -23,7 +23,8 @@ export const App = () => {
       setIsLoading(true);
       const { hits, totalHits } = await fetchImages(query, page);
       setGallery(prevImages => [...prevImages, ...hits]);
-      setTotalPages(page < Math.ceil(totalHits / 12));
+      setTotalPages(Math.ceil(totalHits / 12));
+      setIsLoading(false);
     }
       try {
         getImages()
@@ -41,10 +42,11 @@ export const App = () => {
     setQuery(value.query);
     setPage(1);
     setGallery([]);
+    setTotalPages(null);
   };
 
   const loadMore = () => {
-    setPage(prevState => prevState.page + 1)
+    setPage(prevPage => prevPage + 1)
   };
 
   const images = gallery.length !== 0;
