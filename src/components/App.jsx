@@ -72,7 +72,9 @@ export const App = () => {
           <b>Oops! Something went wrong! Please try reloading this page! 🥹</b>
         )}  
         {images && <ImageGallery gallery={gallery}></ImageGallery>}
-        {totalPages && !isLoading  && images && <Button onClick={loadMore} name="Load more"/>} 
+        {totalPages && !isLoading && images && (page < totalPages
+          ? < Button onClick={loadMore} name="Load more" />
+          : <p>You have reached the end of search results.</p>)} 
       </div>
     )
 }
